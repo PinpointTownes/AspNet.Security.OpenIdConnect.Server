@@ -395,12 +395,18 @@ namespace Owin.Security.OpenIdConnect.Server
                 });
             }
 
-            // If an authentication ticket was provided, stop processing
-            // the request and return an authorization response.
+            // Ensure an authentication ticket has been provided or return
+            // an error code indicating that the request was rejected.
             var ticket = notification.Ticket;
             if (ticket == null)
             {
-                return false;
+                Logger.LogError("The authorization request was rejected because it was not handled by the user code.");
+
+                return await SendAuthorizationResponseAsync(new OpenIdConnectResponse
+                {
+                    Error = OpenIdConnectConstants.Errors.InvalidRequest,
+                    ErrorDescription = "The authorization request was rejected by the authorization server."
+                });
             }
 
             return await HandleSignInAsync(ticket);
@@ -500,7 +506,7 @@ namespace Owin.Security.OpenIdConnect.Server
                 case OpenIdConnectConstants.ResponseModes.FormPost:
                 {
                     Logger.LogInformation("The authorization response was successfully returned to " +
-                                          "{RedirectUri} using the form post response mode: {Response}.",
+                                          "'{RedirectUri}' using the form post response mode: {Response}.",
                                           notification.RedirectUri, response);
 
                     using (var buffer = new MemoryStream())
@@ -549,7 +555,7 @@ namespace Owin.Security.OpenIdConnect.Server
                 case OpenIdConnectConstants.ResponseModes.Fragment:
                 {
                     Logger.LogInformation("The authorization response was successfully returned to " +
-                                          "{RedirectUri} using the fragment response mode: {Response}.",
+                                          "'{RedirectUri}' using the fragment response mode: {Response}.",
                                           notification.RedirectUri, response);
 
                     var location = notification.RedirectUri;
@@ -567,7 +573,7 @@ namespace Owin.Security.OpenIdConnect.Server
                 case OpenIdConnectConstants.ResponseModes.Query:
                 {
                     Logger.LogInformation("The authorization response was successfully returned to " +
-                                          "{RedirectUri} using the query response mode: {Response}.",
+                                          "'{RedirectUri}' using the query response mode: {Response}.",
                                           notification.RedirectUri, response);
 
                     var location = WebUtilities.AddQueryString(notification.RedirectUri, parameters);

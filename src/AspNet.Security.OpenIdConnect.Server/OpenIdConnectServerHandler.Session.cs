@@ -180,7 +180,13 @@ namespace AspNet.Security.OpenIdConnect.Server
                 });
             }
 
-            return false;
+            Logger.LogError("The logout request was rejected because it was not handled by the user code.");
+
+            return await SendLogoutResponseAsync(new OpenIdConnectResponse
+            {
+                Error = OpenIdConnectConstants.Errors.InvalidRequest,
+                ErrorDescription = "The logout request was rejected by the authorization server."
+            });
         }
 
         private async Task<bool> SendLogoutResponseAsync(OpenIdConnectResponse response)
@@ -268,7 +274,7 @@ namespace AspNet.Security.OpenIdConnect.Server
                 parameters.Add(parameter.Key, value);
             }
 
-            Logger.LogInformation("The logout response was successfully returned to {PostLogoutRedirectUri}: {Response}.",
+            Logger.LogInformation("The logout response was successfully returned to '{PostLogoutRedirectUri}': {Response}.",
                                   notification.PostLogoutRedirectUri, response);
 
             var location = QueryHelpers.AddQueryString(notification.PostLogoutRedirectUri, parameters);

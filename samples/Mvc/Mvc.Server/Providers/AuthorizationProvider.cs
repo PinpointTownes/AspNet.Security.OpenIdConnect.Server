@@ -69,6 +69,15 @@ namespace Mvc.Server.Providers
             context.Validate(application.RedirectUri);
         }
 
+        public override Task HandleAuthorizationRequest(HandleAuthorizationRequestContext context)
+        {
+            // Ask the OpenID Connect server middleware to invoke the rest of the pipeline
+            // to allow MVC to handle the authorization request and render a consent form.
+            context.SkipToNextMiddleware();
+
+            return Task.FromResult(0);
+        }
+
         public override async Task ValidateTokenRequest(ValidateTokenRequestContext context)
         {
             var database = context.HttpContext.RequestServices.GetRequiredService<ApplicationContext>();
@@ -150,6 +159,15 @@ namespace Mvc.Server.Providers
             }
 
             context.Validate();
+        }
+
+        public override Task HandleLogoutRequest(HandleLogoutRequestContext context)
+        {
+            // Ask the OpenID Connect server middleware to invoke the rest of the pipeline
+            // to allow MVC to handle the logout request and render a confirmation form.
+            context.SkipToNextMiddleware();
+
+            return Task.FromResult(0);
         }
     }
 }

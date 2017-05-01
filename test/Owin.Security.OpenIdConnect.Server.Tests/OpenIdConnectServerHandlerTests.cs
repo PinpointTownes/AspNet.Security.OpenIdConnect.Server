@@ -355,6 +355,8 @@ namespace Owin.Security.OpenIdConnect.Server.Tests
                     var result = await context.OwinContext.Authentication.AuthenticateAsync(
                         OpenIdConnectServerDefaults.AuthenticationType);
 
+                    context.SkipToNextMiddleware();
+
                     // Assert
                     Assert.Null(result);
                 };
@@ -382,6 +384,8 @@ namespace Owin.Security.OpenIdConnect.Server.Tests
                 {
                     var result = await context.OwinContext.Authentication.AuthenticateAsync(
                         OpenIdConnectServerDefaults.AuthenticationType);
+
+                    context.SkipToNextMiddleware();
 
                     // Assert
                     Assert.Null(result);
@@ -425,6 +429,8 @@ namespace Owin.Security.OpenIdConnect.Server.Tests
                 {
                     var result = await context.OwinContext.Authentication.AuthenticateAsync(
                         OpenIdConnectServerDefaults.AuthenticationType);
+
+                    context.SkipToNextMiddleware();
 
                     // Assert
                     Assert.NotNull(result.Identity);

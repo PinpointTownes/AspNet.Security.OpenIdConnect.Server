@@ -849,6 +849,36 @@ namespace AspNet.Security.OpenIdConnect.Server.Tests
             Assert.Equal("Bob le Magnifique", (string) response["name"]);
         }
 
+        [Fact]
+        public async Task InvokeAuthorizationEndpointAsync_RejectsUnhandledRequestsWithDefaultError()
+        {
+            // Arrange
+            var server = CreateAuthorizationServer(options =>
+            {
+                options.Provider.OnValidateAuthorizationRequest = context =>
+                {
+                    context.Validate();
+
+                    return Task.FromResult(0);
+                };
+            });
+
+            var client = new OpenIdConnectClient(server.CreateClient());
+
+            // Act
+            var response = await client.PostAsync(AuthorizationEndpoint, new OpenIdConnectRequest
+            {
+                ClientId = "Fabrikam",
+                RedirectUri = "http://www.fabrikam.com/path",
+                ResponseType = OpenIdConnectConstants.ResponseTypes.Code,
+                Scope = OpenIdConnectConstants.Scopes.OpenId
+            });
+
+            // Assert
+            Assert.Equal(OpenIdConnectConstants.Errors.InvalidRequest, response.Error);
+            Assert.Equal("The authorization request was rejected by the authorization server.", response.ErrorDescription);
+        }
+
         [Theory]
         [InlineData("code", OpenIdConnectConstants.ResponseModes.Query)]
         [InlineData("code id_token", OpenIdConnectConstants.ResponseModes.Fragment)]

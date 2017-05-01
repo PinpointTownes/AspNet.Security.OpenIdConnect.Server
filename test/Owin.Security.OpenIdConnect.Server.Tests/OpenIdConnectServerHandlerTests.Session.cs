@@ -308,6 +308,30 @@ namespace Owin.Security.OpenIdConnect.Server.Tests
         }
 
         [Fact]
+        public async Task InvokeLogoutEndpointAsync_RejectsUnhandledRequestsWithDefaultError()
+        {
+            // Arrange
+            var server = CreateAuthorizationServer(options =>
+            {
+                options.Provider.OnValidateLogoutRequest = context =>
+                {
+                    context.Validate();
+
+                    return Task.FromResult(0);
+                };
+            });
+
+            var client = new OpenIdConnectClient(server.HttpClient);
+
+            // Act
+            var response = await client.PostAsync(LogoutEndpoint, new OpenIdConnectRequest());
+
+            // Assert
+            Assert.Equal(OpenIdConnectConstants.Errors.InvalidRequest, response.Error);
+            Assert.Equal("The logout request was rejected by the authorization server.", response.ErrorDescription);
+        }
+
+        [Fact]
         public async Task SendLogoutResponseAsync_ApplyLogoutResponse_AllowsHandlingResponse()
         {
             // Arrange

@@ -359,6 +359,8 @@ namespace AspNet.Security.OpenIdConnect.Server.Tests
                     var principal = await context.HttpContext.Authentication.AuthenticateAsync(
                         OpenIdConnectServerDefaults.AuthenticationScheme);
 
+                    context.SkipToNextMiddleware();
+
                     // Assert
                     Assert.Null(principal);
                 };
@@ -386,6 +388,8 @@ namespace AspNet.Security.OpenIdConnect.Server.Tests
                 {
                     var principal = await context.HttpContext.Authentication.AuthenticateAsync(
                         OpenIdConnectServerDefaults.AuthenticationScheme);
+
+                    context.SkipToNextMiddleware();
 
                     // Assert
                     Assert.Null(principal);
@@ -432,6 +436,8 @@ namespace AspNet.Security.OpenIdConnect.Server.Tests
                 {
                     var principal = await context.HttpContext.Authentication.AuthenticateAsync(
                         OpenIdConnectServerDefaults.AuthenticationScheme);
+
+                    context.SkipToNextMiddleware();
 
                     // Assert
                     Assert.NotNull(principal);

@@ -836,7 +836,7 @@ namespace Owin.Security.OpenIdConnect.Server.Tests
         }
 
         [Fact]
-        public async Task SendAuthorizationResponseAsync_ApplyAuthorizationResponse_AllowsHandlingResponse()
+        public async Task InvokeAuthorizationEndpointAsync_RejectsUnhandledRequestsWithDefaultError()
         {
             // Arrange
             var server = CreateAuthorizationServer(options =>
@@ -846,28 +846,6 @@ namespace Owin.Security.OpenIdConnect.Server.Tests
                     context.Validate();
 
                     return Task.FromResult(0);
-                };
-
-                options.Provider.OnHandleAuthorizationRequest = context =>
-                {
-                    var identity = new ClaimsIdentity(context.Options.AuthenticationType);
-                    identity.AddClaim(OpenIdConnectConstants.Claims.Subject, "Bob le Magnifique");
-
-                    context.Validate(identity);
-
-                    return Task.FromResult(0);
-                };
-
-                options.Provider.OnApplyAuthorizationResponse = context =>
-                {
-                    context.HandleResponse();
-
-                    context.OwinContext.Response.Headers["Content-Type"] = "application/json";
-
-                    return context.OwinContext.Response.WriteAsync(JsonConvert.SerializeObject(new
-                    {
-                        name = "Bob le Magnifique"
-                    }));
                 };
             });
 
@@ -883,7 +861,8 @@ namespace Owin.Security.OpenIdConnect.Server.Tests
             });
 
             // Assert
-            Assert.Equal("Bob le Magnifique", (string) response["name"]);
+            Assert.Equal(OpenIdConnectConstants.Errors.InvalidRequest, response.Error);
+            Assert.Equal("The authorization request was rejected by the authorization server.", response.ErrorDescription);
         }
 
         [Theory]
@@ -938,6 +917,57 @@ namespace Owin.Security.OpenIdConnect.Server.Tests
 
             // Assert
             Assert.Equal(mode, (string) response["inferred_response_mode"]);
+        }
+
+        [Fact]
+        public async Task SendAuthorizationResponseAsync_ApplyAuthorizationResponse_AllowsHandlingResponse()
+        {
+            // Arrange
+            var server = CreateAuthorizationServer(options =>
+            {
+                options.Provider.OnValidateAuthorizationRequest = context =>
+                {
+                    context.Validate();
+
+                    return Task.FromResult(0);
+                };
+
+                options.Provider.OnHandleAuthorizationRequest = context =>
+                {
+                    var identity = new ClaimsIdentity(context.Options.AuthenticationType);
+                    identity.AddClaim(OpenIdConnectConstants.Claims.Subject, "Bob le Magnifique");
+
+                    context.Validate(identity);
+
+                    return Task.FromResult(0);
+                };
+
+                options.Provider.OnApplyAuthorizationResponse = context =>
+                {
+                    context.HandleResponse();
+
+                    context.OwinContext.Response.Headers["Content-Type"] = "application/json";
+
+                    return context.OwinContext.Response.WriteAsync(JsonConvert.SerializeObject(new
+                    {
+                        name = "Bob le Magnifique"
+                    }));
+                };
+            });
+
+            var client = new OpenIdConnectClient(server.HttpClient);
+
+            // Act
+            var response = await client.PostAsync(AuthorizationEndpoint, new OpenIdConnectRequest
+            {
+                ClientId = "Fabrikam",
+                RedirectUri = "http://www.fabrikam.com/path",
+                ResponseType = OpenIdConnectConstants.ResponseTypes.Code,
+                Scope = OpenIdConnectConstants.Scopes.OpenId
+            });
+
+            // Assert
+            Assert.Equal("Bob le Magnifique", (string) response["name"]);
         }
 
         [Fact]
